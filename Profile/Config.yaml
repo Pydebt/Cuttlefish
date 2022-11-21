@@ -1,382 +1,653 @@
-# 请使用最新版Clash
-# 将proxy-providers里面链接中的“你的订阅链接”全部替换即可
-mixed-port: 7890
-allow-lan: true
-bind-address: '*'
-mode: rule
-log-level: info
-ipv6: true
-external-controller: 127.0.0.1:9090
+徽标
+ddgksf2013
+/
+Cuttlefish
+关注
+1
+ 点赞
+0
+派生
+0
+代码
+工单
+合并请求
+软件包
+项目
+版本发布
+百科
+动态
 
-proxy-providers:
-  #全部节点
-  All:
-    type: http
-    url: "https://api.v1.mk/sub?target=clash&url=你的订阅链接&list=true&udp=true"
-    # 可以使用任意类型的链接替换上面文字，多个链接使用英文符号的竖杠|隔开一起写上即可；也可以将Clash订阅链接替换掉整个引号""内的链接
-    interval: 3600
-    path: ./all.yaml
-    health-check:
-      enable: true
-      interval: 600
-      url: http://www.gstatic.com/generate_204
-  #香港节点     
-  HK:
-    type: file
-    path: ./all.yaml
-    filter: 港|HK|(?i)Hong
-    health-check:
-      enable: true
-      interval: 120
-      url: http://www.gstatic.com/generate_204
- #日本节点
-  JP:
-    type: file
-    path: ./all.yaml
-    filter: 日|东京|JP|(?i)Japan
-    health-check:
-      enable: true
-      interval: 120
-      url: http://www.gstatic.com/generate_204
- #美国节点
-  US:
-    type: file
-    path: ./all.yaml
-    filter: 美|US|(?i)States|American
-    health-check:
-      enable: true
-      interval: 120
-      url: http://www.gstatic.com/generate_204
- #台湾节点
-  TW:
-    type: file
-    path: ./all.yaml
-    filter: 台|湾|TW|(?i)Taiwan
-    health-check:
-      enable: true
-      interval: 120
-      url: http://www.gstatic.com/generate_204
-      
+8803129431
+Cuttlefish/Profile/Clash.yaml
+626 行
+22 KiB
+原始文件
+Blame
+文件历史
+Escape
+---
+port: 8888
+socks-port: 8889
+mixed-port: 8899
+allow-lan: true
+mode: Rule
+log-level: info
+external-controller: 127.0.0.1:6170
+experimental:
+  ignore-resolve-fail: true
+cfw-latency-timeout: 3000
+cfw-latency-url: http://cp.cloudflare.com/generate_204
+cfw-conn-break-strategy: true
+clash-for-android:
+  ui-subtitle-pattern: '[一-龥]{2,4}'
+url-rewrite:
+- ^https?:\/\/(www.)?(g|google)\.cn https://www.google.com 302
+- ^https?:\/\/(ditu|maps).google\.cn https://maps.google.com 302
+
 dns:
   enable: true
-  ipv6: true
+  ipv6: false
   listen: 0.0.0.0:53
-  default-nameserver:
-    - 119.29.29.29
-    - 223.5.5.5
-    - 8.8.4.4
-  enhanced-mode: fake-ip
+  enhanced-mode: redir-host
   fake-ip-range: 198.18.0.1/16
   fake-ip-filter:
-    - '*.lan'
-    - localhost.ptlogin2.qq.com
-    - '+.srv.nintendo.net'
-    - '+.stun.playstation.net'
-    - '+.msftconnecttest.com'
-    - '+.msftncsi.com'
-    - '+.xboxlive.com'
-    - 'msftconnecttest.com'
-    - 'xbox.*.microsoft.com'
-    - '*.battlenet.com.cn'
-    - '*.battlenet.com'
-    - '*.blzstatic.cn'
-    - '*.battle.net'
+     - '*.lan'
+     - localhost.ptlogin2.qq.com
   nameserver:
-    - https://doh.pub/dns-query
-    - https://dns.alidns.com/dns-query
-    - https://dns.google/dns-query
-    
-proxies:
+     - 223.5.5.5
+     - 119.29.29.29
+     - https://doh.pub/dns-query
+     - https://dns.alidns.com/dns-query
+  fallback:
+     - 8.8.8.8
+     - 1.1.1.1
+     - tls://1.0.0.1:853
+     - tls://dns.google:853
+     - https://cloudflare-dns.com/dns-query
+     - https://dns.google/dns-query
+  fallback-filter:
+     geoip: true
+     ipcidr:
+       - 240.0.0.0/4       
+# 1. clash DNS 请求逻辑：
+#   (1) 当访问一个域名时， nameserver 与 fallback 列表内的所有服务器并发请求，得到域名对应的 IP 地址。
+#   (2) clash 将选取 nameserver 列表内，解析最快的结果。
+#   (3) 若解析结果中，IP 地址属于 国外，那么 clash 将选择 fallback 列表内，解析最快的结果。
+#
+#   因此，我在 nameserver 和 fallback 内都放置了无污染、解析速度较快的国内 DNS 服务器，以达到最快的解析速度。
+#   但是 fallback 列表内服务器会用在解析境外网站，为了结果绝对无污染，我仅保留了支持 DoT/DoH 的两个服务器。
+#
+# 2. clash DNS 配置注意事项：
+#   (1) 如果您为了确保 DNS 解析结果无污染，请仅保留列表内以 tls:// 或 https:// 开头的 DNS 服务器，但是通常对于国内域名没有必要。
+#   (2) 如果您不在乎可能解析到污染的结果，更加追求速度。请将 nameserver 列表的服务器插入至 fallback 列表内，并移除重复项。
+#
+# 3. 关于 DNS over HTTPS (DoH) 和 DNS over TLS (DoT) 的选择：
+#   对于两项技术双方各执一词，而且会无休止的争论，各有利弊。各位请根据具体需求自行选择，但是配置文件内默认启用 DoT，因为目前国内没有封锁或管制。
+#   DoH: 以 https:// 开头的 DNS 服务器。拥有更好的伪装性，且几乎不可能被运营商或网络管理封锁，但查询效率和安全性可能略低。
+#   DoT: 以 tls:// 开头的 DNS 服务器。拥有更高的安全性和查询效率，但端口有可能被管制或封锁。
+#   若要了解更多关于 DoH/DoT 相关技术，请自行查阅规范文档。
 
-            
-proxy-groups:
-  - name: 🚀 手动切换
-    type: select
-    use:
-      - All
-    proxies:
-      - ✈️ 自动选择
+# 代理组
+# 下面这2项，大家根据自身情况进行修改。
+# Will be ignored after profile selection
+#proxies:
+#  - name: Shadowsocks
+#    type: socks5
+#    server: 127.0.0.1
+#    port: 1080
+#proxy-groups:
+#  - name: Proxy
+#    type: select
+#    proxies:
+#      - Shadowsocks
 
-  - name: ✈️ 自动选择
-    type: url-test
-    use: 
-       - All
-    url: "http://www.gstatic.com/generate_204"
-    interval: 300
+#以下rules主要着重于网页广告、应用广告、运行商劫持、隐私、国外多媒体等方面。
+rules:
+- RULE-SET,Advertising,AdBlock
+- RULE-SET,Advertising_Domain,AdBlock
+- RULE-SET,BanAD,AdBlock
+- RULE-SET,Hijacking,AdBlock
+- RULE-SET,Privacy,AdBlock
+- RULE-SET,Privacy_Domain,AdBlock
+- RULE-SET,AdguardDNS,AdBlock
+- RULE-SET,Special,DIRECT
+- RULE-SET,Netflix,Netflix
+- RULE-SET,Spotify,Spotify
+- RULE-SET,YouTube,YouTube
+- RULE-SET,Disney Plus,Disney
+- RULE-SET,Bilibili,Asian TV
+- RULE-SET,IQ,Asian TV
+- RULE-SET,IQIYI,Asian TV
+- RULE-SET,Letv,Asian TV
+- RULE-SET,Netease Music,Asian TV
+- RULE-SET,Tencent Video,Asian TV
+- RULE-SET,Youku,Asian TV
+- RULE-SET,WeTV,Asian TV
+- RULE-SET,ABC,Global TV
+- RULE-SET,Abema TV,Global TV
+- RULE-SET,Amazon,Global TV
+- RULE-SET,Apple Music,Global TV
+- RULE-SET,Apple News,Global TV
+- RULE-SET,Apple TV,Global TV
+- RULE-SET,Bahamut,Global TV
+- RULE-SET,BBC iPlayer,Global TV
+- RULE-SET,DAZN,Global TV
+- RULE-SET,Discovery Plus,Global TV
+- RULE-SET,encoreTVB,Global TV
+- RULE-SET,Fox Now,Global TV
+- RULE-SET,Fox+,Global TV
+- RULE-SET,HBO Go,Global TV
+- RULE-SET,HBO Max,Global TV
+- RULE-SET,Hulu Japan,Global TV
+- RULE-SET,Hulu,Global TV
+- RULE-SET,Japonx,Global TV
+- RULE-SET,JOOX,Global TV
+- RULE-SET,KKBOX,Global TV
+- RULE-SET,KKTV,Global TV
+- RULE-SET,Line TV,Global TV
+- RULE-SET,myTV SUPER,Global TV
+- RULE-SET,Niconico,Global TV
+- RULE-SET,Pandora,Global TV
+- RULE-SET,PBS,Global TV
+- RULE-SET,Pornhub,Global TV
+- RULE-SET,Soundcloud,Global TV
+- RULE-SET,ViuTV,Global TV
+- RULE-SET,Telegram,Telegram
+- RULE-SET,Discord,Proxy
+- RULE-SET,Steam,Steam
+- RULE-SET,Speedtest,Speedtest
+- RULE-SET,PayPal,PayPal
+- RULE-SET,Microsoft,Microsoft
+- RULE-SET,Apple,Apple
+- RULE-SET,Google FCM,Google FCM
+- RULE-SET,Scholar,Scholar
+- RULE-SET,PROXY01,Proxy
+- RULE-SET,PROXY02,Proxy
+- RULE-SET,Domestic,Domestic
+- RULE-SET,Domestic IPs,Domestic
+- RULE-SET,LAN,DIRECT
+- GEOIP,CN,Domestic
+- MATCH,Others
+- DOMAIN-SUFFIX,macime.sogou.com,REJECT
+- DOMAIN-SUFFIX,ime.sogou.com,REJECT
+- DOMAIN-SUFFIX,pinyin.sogou.com,REJECT
+- DOMAIN-SUFFIX,account.sogou.com,REJECT
+- DOMAIN-SUFFIX,shouji.sogou.com,REJECT
+- DOMAIN-SUFFIX,get.sogou.com,REJECT
+- PROCESS-NAME,SogouServices,REJECT
+- PROCESS-NAME,SogouTaskManager,REJECT
+- PROCESS-NAME,SOgouTaskManager,REJECT
+- PROCESS-NAME,SogouInput,REJECT
+script:
+  code: |
+    def main(ctx, metadata):
+        ruleset_action = {"Advertising": "AdBlock",
+            "Advertising_Domain": "AdBlock",
+            "BanAD": "AdBlock",
+            "Hijacking": "AdBlock",
+            "Privacy": "AdBlock",
+            "Privacy_Domain": "AdBlock",
+            "AdguardDNS": "AdBlock",
+            "Special": "DIRECT",
+            "Netflix": "Netflix",
+            "Spotify": "Spotify",
+            "YouTube": "YouTube",
+            "Disney Plus": "Disney",
+            "Bilibili": "Asian TV",
+            "IQ": "Asian TV",
+            "IQIYI": "Asian TV",
+            "Letv": "Asian TV",
+            "Netease Music": "Asian TV",
+            "Tencent Video": "Asian TV",
+            "Youku": "Asian TV",
+            "WeTV": "Asian TV",
+            "ABC": "Global TV",
+            "Abema TV": "Global TV",
+            "Amazon": "Global TV",
+            "Apple Music": "Global TV",
+            "Apple News": "Global TV",
+            "Apple TV": "Global TV",
+            "Bahamut": "Global TV",
+            "BBC iPlayer": "Global TV",
+            "DAZN": "Global TV",
+            "Discovery Plus": "Global TV",
+            "encoreTVB": "Global TV",
+            "Fox Now": "Global TV",
+            "Fox+": "Global TV",
+            "HBO Go": "Global TV",
+            "HBO Max": "Global TV",
+            "Hulu Japan": "Global TV",
+            "Hulu": "Global TV",
+            "Japonx": "Global TV",
+            "JOOX": "Global TV",
+            "KKBOX": "Global TV",
+            "KKTV": "Global TV",
+            "Line TV": "Global TV",
+            "myTV SUPER": "Global TV",
+            "Niconico": "Global TV",
+            "Pandora": "Global TV",
+            "PBS": "Global TV",
+            "Pornhub": "Global TV",
+            "Soundcloud": "Global TV",
+            "ViuTV": "Global TV",
+            "Telegram": "Telegram",
+            "Discord": "Discord",
+            "Steam": "Steam",
+            "Speedtest": "Speedtest",
+            "PayPal": "PayPal",
+            "Microsoft": "Microsoft",
+            "Apple": "Apple",
+            "Google FCM": "Google FCM",
+            "Scholar": "Scholar",
+            "PROXY01": "Proxy",
+            "PROXY02": "Proxy",
+            "Domestic": "Domestic",
+            "Domestic IPs": "Domestic",
+            "LAN": "DIRECT"
+          }
 
-  - name: 🎬 YouTube
-    type: select
-    proxies:
-      - 🚀 手动切换
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🇨🇳 台湾节点
-      - DIRECT
+        port = int(metadata["dst_port"])
 
-  - name: 🎬 NETFLIX
-    type: select
-    proxies:
-      - 🚀 手动切换
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🇨🇳 台湾节点
-      - DIRECT
+        if metadata["network"] == "UDP" and port == 443:
+            ctx.log('[Script] matched QUIC traffic use reject')
+            return "REJECT"
 
-  - name: 🎬 Disney+
-    type: select
-    proxies:
-      - 🚀 手动切换
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🇨🇳 台湾节点
-      - DIRECT
+        port_list = [21, 22, 23, 53, 80, 123, 143, 194, 443, 465, 587, 853, 993, 995, 998, 2052, 2053, 2082, 2083, 2086, 2095, 2096, 3389, 5222, 5228, 5229, 5230, 8080, 8443, 8880, 8888, 8889]
+        if port not in port_list:
+            ctx.log('[Script] not common port use direct')
+            return "DIRECT"
 
-  - name: 🎬 巴哈姆特
-    type: select
-    proxies:
-      - 🇨🇳 台湾节点
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🚀 手动切换
-      - DIRECT
+        if metadata["dst_ip"] == "":
+            metadata["dst_ip"] = ctx.resolve_ip(metadata["host"])
 
-  - name: 🆎 AdBlock
-    type: select
-    proxies:
-      - REJECT
-      - 🚀 手动切换
+        for ruleset in ruleset_action:
+            if ctx.rule_providers[ruleset].match(metadata):
+                return ruleset_action[ruleset]
 
-  - name: 🌏 国外网站
-    type: select
-    proxies:
-      - 🚀 手动切换
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🇨🇳 台湾节点
-      - DIRECT
+        if metadata["dst_ip"] != "":
+            code = ctx.geoip(metadata["dst_ip"])
+            if code == "CN":
+                ctx.log('[Script] Geoip CN')
+                return "Domestic"
 
-  - name: 🍎 苹果服务
-    type: select
-    proxies:
-      - DIRECT
-      - 🚀 手动切换
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🇨🇳 台湾节点
-
-  - name: 🧩 微软服务
-    type: select
-    proxies:
-      - DIRECT
-      - 🚀 手动切换
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🇨🇳 台湾节点
-
-  - name: 🎶 网易音乐
-    type: select
-    proxies:
-      - DIRECT
-
-  - name: 🎬 哔哩哔哩
-    type: select
-    proxies:
-      - DIRECT
-      - 🚀 手动切换
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🇨🇳 台湾节点
-
-  - name: 🎮 游戏平台
-    type: select
-    proxies:
-      - 🚀 手动切换
-      - DIRECT
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🇨🇳 台湾节点
-
-  - name: 🌏 国内网站
-    type: select
-    proxies:
-      - DIRECT
-      - 🚀 手动切换
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🇨🇳 台湾节点
-
-  - name: 🐟 漏网之鱼
-    type: select
-    proxies:
-      - 🚀 手动切换
-      - DIRECT
-      - ✈️ 自动选择
-      - 🇭🇰 香港节点
-      - 🇯🇵 日本节点
-      - 🇺🇲 美国节点
-      - 🇨🇳 台湾节点
-  - name: 🇭🇰 香港节点
-    type: select
-    use:
-      - HK
-    proxies:
-      - DIRECT
-  - name: 🇯🇵 日本节点
-    type: select
-    use:
-      - JP
-    proxies:
-      - DIRECT
-  - name: 🇨🇳 台湾节点
-    type: select
-    use:
-      - TW
-    proxies:
-      - DIRECT
-  - name: 🇺🇲 美国节点
-    type: select
-    use:
-      - US
-    proxies:
-      - DIRECT
-
+        ctx.log('[Script] FINAL')
+        return "Others"    
 rule-providers:
-
-  Direct:
+  Advertising:
     type: http
     behavior: classical
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Direct/Direct.yaml"
-    path: ./ruleset/direct.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Advertising/Advertising.yaml
+    path: ./Rules/Reject
     interval: 86400
-
-  adblock:
+  Advertising_Domain:
+    type: http
+    behavior: domain
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Advertising/Advertising_Domain.yaml
+    path: ./Rules/Reject
+    interval: 86400
+  BanAD:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Advertising/Advertising_Classical.yaml"
-    path: ./ruleset/Advertising_Classical.yaml
-    interval: 86400
-        
-  YouTube:
+    url: https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list
+    path: ./Rules/Reject
+    interval: 86400  
+  Hijacking:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTube/YouTube.yaml"
-    path: ./ruleset/YouTube.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Hijacking/Hijacking.yaml
+    path: ./Rules/Reject
     interval: 86400
-
+  Privacy:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Privacy/Privacy.yaml
+    path: ./Rules/Reject
+    interval: 86400
+  Privacy_Domain:
+    type: http
+    behavior: domain
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Privacy/Privacy_Domain.yaml
+    path: ./Rules/Reject
+    interval: 86400
+  AdguardDNS:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/AdGuardSDNSFilter/AdGuardSDNSFilter_Classical.yaml
+    path: ./Rules/Reject
+    interval: 86400    
+  Special:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/dler-io/Rules@main/Clash/Provider/Special.yaml
+    path: ./Rules/Special
+    interval: 86400
   Netflix:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix.yaml"
-    path: ./ruleset/Netflix.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Netflix/Netflix.yaml
+    path: ./Rules/Media/Netflix
     interval: 86400
-
-  Disney:
+  Spotify:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Disney/Disney.yaml"
-    path: ./ruleset/Disney.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Spotify/Spotify.yaml
+    path: ./Rules/Media/Spotify
     interval: 86400
-
+  YouTube:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/YouTube/YouTube.yaml
+    path: ./Rules/Media/YouTube
+    interval: 86400
+  Bilibili:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/BiliBili/BiliBili.yaml
+    path: ./Rules/Media/Bilibili
+    interval: 86400
+  IQ:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/iQIYIIntl/iQIYIIntl.yaml
+    path: ./Rules/Media/IQI
+    interval: 86400
+  IQIYI:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/iQIYI/iQIYI.yaml
+    path: ./Rules/Media/IQYI
+    interval: 86400
+  Letv:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/LeTV/LeTV.yaml
+    path: ./Rules/Media/Letv
+    interval: 86400
+  Netease Music:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/NetEaseMusic/NetEaseMusic.yaml
+    path: ./Rules/Media/Netease_Music
+    interval: 86400
+  Tencent Video:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/TencentVideo/TencentVideo.yaml
+    path: ./Rules/Media/Tencent_Video
+    interval: 86400
+  Youku:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Youku/Youku.yaml
+    path: ./Rules/Media/Youku
+    interval: 86400
+  WeTV:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/WeTV/WeTV.yaml
+    path: ./Rules/Media/WeTV
+    interval: 86400
+  ABC:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/ABC/ABC.yaml
+    path: ./Rules/Media/ABC
+    interval: 86400
+  Abema TV:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/AbemaTV/AbemaTV.yaml
+    path: ./Rules/Media/Abema_TV
+    interval: 86400
+  Amazon:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Amazon/Amazon.yaml
+    path: ./Rules/Media/Amazon
+    interval: 86400
+  Apple Music:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/AppleMusic/AppleMusic.yaml
+    path: ./Rules/Media/Apple_Music
+    interval: 86400
+  Apple News:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/AppleNews/AppleNews.yaml
+    path: ./Rules/Media/Apple_News
+    interval: 86400
+  Apple TV:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/AppleTV/AppleTV.yaml
+    path: ./Rules/Media/Apple_TV
+    interval: 86400
   Bahamut:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bahamut/Bahamut.yaml"
-    path: ./ruleset/Bahamut.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Bahamut/Bahamut.yaml
+    path: ./Rules/Media/Bahamut
     interval: 86400
-
-  Apple:
+  BBC iPlayer:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Apple/Apple.yaml"
-    path: ./ruleset/Apple.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/BBC/BBC.yaml
+    path: ./Rules/Media/BBC_iPlayer
     interval: 86400
-
-  NetEaseMusic:
+  DAZN:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/NetEaseMusic/NetEaseMusic.yaml"
-    path: ./ruleset/NetEaseMusic.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/DAZN/DAZN.yaml
+    path: ./Rules/Media/DAZN
     interval: 86400
-    
+  Discovery Plus:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/DiscoveryPlus/DiscoveryPlus.yaml
+    path: ./Rules/Media/Discovery_Plus
+    interval: 86400
+  Disney Plus:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Disney/Disney.yaml
+    path: ./Rules/Media/Disney_Plus
+    interval: 86400
+  encoreTVB:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/EncoreTVB/EncoreTVB.yaml
+    path: ./Rules/Media/encoreTVB
+    interval: 86400
+  Fox Now:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/FOXNOW/FOXNOW.yaml
+    path: ./Rules/Media/Fox_Now
+    interval: 86400
+  Fox+:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/FOXPlus/FOXPlus.yaml
+    path: ./Rules/Media/Fox+
+    interval: 86400
+  HBO Go:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/HBOUSA/HBOUSA.yaml
+    path: ./Rules/Media/HBO_Go
+    interval: 86400
+  HBO Max:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/HBOAsia/HBOAsia.yaml
+    path: ./Rules/Media/HBO_Max
+    interval: 86400
+  Hulu Japan:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/HuluJP/HuluJP.yaml
+    path: ./Rules/Media/Hulu_Japan
+    interval: 86400
+  Hulu:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Hulu/Hulu.yaml
+    path: ./Rules/Media/Hulu
+    interval: 86400
+  Japonx:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Japonx/Japonx.yaml
+    path: ./Rules/Media/Japonx
+    interval: 86400
+  JOOX:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/JOOX/JOOX.yaml
+    path: ./Rules/Media/JOOX
+    interval: 86400
+  KKBOX:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/KKBOX/KKBOX.yaml
+    path: ./Rules/Media/KKBOX
+    interval: 86400
+  KKTV:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/KKTV/KKTV.yaml
+    path: ./Rules/Media/KKTV
+    interval: 86400
+  Line TV:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/LineTV/LineTV.yaml
+    path: ./Rules/Media/Line_TV
+    interval: 86400
+  myTV SUPER:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/myTVSUPER/myTVSUPER.yaml
+    path: ./Rules/Media/myTV_SUPER
+    interval: 86400
+  Niconico:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Niconico/Niconico.yaml
+    path: ./Rules/Media/Niconico
+    interval: 86400
+  Pandora:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Pandora/Pandora.yaml
+    path: ./Rules/Media/Pandora
+    interval: 86400
+  PBS:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/PBS/PBS.yaml
+    path: ./Rules/Media/PBS
+    interval: 86400
+  Pornhub:
+    type: http
+    behavior: classical
+    url: https://fastly.jsdelivr.net/gh/dler-io/Rules@main/Clash/Provider/Media/Pornhub.yaml
+    path: ./Rules/Media/Pornhub
+    interval: 86400
+  Soundcloud:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/SoundCloud/SoundCloud.yaml
+    path: ./Rules/Media/Soundcloud
+    interval: 86400
+  ViuTV:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/ViuTV/ViuTV.yaml
+    path: ./Rules/Media/ViuTV
+    interval: 86400
+  Telegram:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Telegram/Telegram.yaml
+    path: ./Rules/Telegram
+    interval: 86400
+  Discord:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Discord/Discord.yaml
+    path: ./Rules/Discord
+    interval: 86400
+  Steam:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Steam/Steam.yaml
+    path: ./Rules/Steam
+    interval: 86400
+  Speedtest:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Speedtest/Speedtest.yaml
+    path: ./Rules/Speedtest
+    interval: 86400
+  PayPal:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/PayPal/PayPal.yaml
+    path: ./Rules/PayPal
+    interval: 86400
   Microsoft:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Microsoft/Microsoft.yaml"
-    path: ./ruleset/Microsoft.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Microsoft/Microsoft.yaml
+    path: ./Rules/Microsoft
     interval: 86400
-
-  BiliBili:
+  PROXY01:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBili/BiliBili.yaml"
-    path: ./ruleset/BiliBili.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Proxy/Proxy.yaml
+    path: ./Rules/Proxy
     interval: 86400
-
-  Game:
+  PROXY02:
+    type: http
+    behavior: domain
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Proxy/Proxy_Domain.yaml
+    path: ./Rules/Proxy
+    interval: 86400
+  Domestic:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Game/Game.yaml"
-    path: ./ruleset/Game.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/ChinaMax/ChinaMax_Classical.yaml
+    path: ./Rules/Domestic
     interval: 86400
-
-  China:
+  Apple:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/China/China.yaml"
-    path: ./ruleset/China.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Apple/Apple.yaml
+    path: ./Rules/Apple
     interval: 86400
-
-  Global_Classical:
+  Google FCM:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@release/rule/Clash/Global/Global_Classical.yaml"
-    path: ./ruleset/Global_Classical.yaml
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GoogleFCM/GoogleFCM.yaml
+    path: ./Rules/Google FCM
     interval: 86400
-
-
-
-rules:
-  - RULE-SET,Direct,DIRECT
-  - RULE-SET,adblock,🆎 AdBlock
-  - RULE-SET,YouTube,🎬 YouTube
-  - RULE-SET,Netflix,🎬 NETFLIX
-  - RULE-SET,Disney,🎬 Disney+
-  - RULE-SET,Bahamut,🎬 巴哈姆特
-  - RULE-SET,Apple,🍎 苹果服务
-  - RULE-SET,Microsoft,🧩 微软服务
-  - RULE-SET,NetEaseMusic,🎶 网易音乐
-  - RULE-SET,BiliBili,🎬 哔哩哔哩
-  - RULE-SET,Game,🎮 游戏平台
-  - RULE-SET,Global_Classical,🌏 国外网站
-  - RULE-SET,China,🌏 国内网站
-  - IP-CIDR,192.168.0.0/16,DIRECT
-  - IP-CIDR,10.0.0.0/8,DIRECT
-  - IP-CIDR,172.16.0.0/12,DIRECT
-  - IP-CIDR,127.0.0.0/8,DIRECT
-  - IP-CIDR,100.64.0.0/10,DIRECT
-  - IP-CIDR,224.0.0.0/4,DIRECT
-  - IP-CIDR,fe80::/10,DIRECT
-  - IP-CIDR,119.28.28.28/32,DIRECT
-  - IP-CIDR,182.254.116.0/24,DIRECT
-  - GEOIP,CN,🌏 国内网站
-  - MATCH,🐟 漏网之鱼
+  Scholar:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Scholar/Scholar.yaml
+    path: ./Rules/Scholar
+    interval: 86400
+  Domestic IPs:
+    type: http
+    behavior: ipcidr
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/ChinaMax/ChinaMax_IP.yaml
+    path: ./Rules/Domestic_IPs
+    interval: 86400
+  LAN:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Lan/Lan.yaml
+    path: ./Rules/LAN
+    interval: 86400
