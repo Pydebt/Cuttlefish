@@ -8,32 +8,32 @@
 * @ScriptFunction    签到得火车票抵偿金
 * @Attention         Cookie有效期约XX天（待测试）
 * @AppletPath        微信小程序搜索🔍同程旅行✈️点击主页下面的【火车票优惠】即可
-* @ScriptURL         https://ocd0522.tk/ddgksf2013/Cuttlefish/raw/branch/master/Script/tclx.js
+* @ScriptURL         https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/tclx.js
 * ==/UserScript==
 【QuantumultX】 :
 *************************
 [rewrite_local]
-https://openapi.17usoft.net/maskantactivityapi/memberCenterSign\?.+ url script-request-body https://ocd0522.tk/ddgksf2013/Cuttlefish/raw/branch/master/Script/tclx.js
+https://openapi.17usoft.net/maskantactivityapi/memberCenterSign\?.+ url script-request-body https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/tclx.js
 [task_local]
-15 7,15 * * * https://ocd0522.tk/ddgksf2013/Cuttlefish/raw/branch/master/Script/tclx.js, tag=TCLX
+15 7,15 * * * https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/tclx.js, tag=TCLX
 *************************
 【Loon】 :
 *************************
 [Script]
-http-request https://openapi.17usoft.net/maskantactivityapi/memberCenterSign\?.+ tag=TCLXCookie, script-path=https://ocd0522.tk/ddgksf2013/Cuttlefish/raw/branch/master/Script/tclx.js
-cron "15 7,15 * * *" script-path=https://ocd0522.tk/ddgksf2013/Cuttlefish/raw/branch/master/Script/tclx.js,tag=TCLX
+http-request https://openapi.17usoft.net/maskantactivityapi/memberCenterSign\?.+ tag=TCLXCookie, script-path=https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/tclx.js
+cron "15 7,15 * * *" script-path=https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/tclx.js,tag=TCLX
 *************************
 【Surge】 :
 *************************
 [Script]
-TCLX = type=cron,cronexp="15 7,15 * * *",wake-system=1,timeout=120,script-path=https://ocd0522.tk/ddgksf2013/Cuttlefish/raw/branch/master/Script/tclx.js
-TCLXCookie = type=http-request,pattern=https://openapi.17usoft.net/maskantactivityapi/memberCenterSign\?.+,script-path=https://ocd0522.tk/ddgksf2013/Cuttlefish/raw/branch/master/Script/tclx.js
+TCLX = type=cron,cronexp="15 7,15 * * *",wake-system=1,timeout=120,script-path=https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/tclx.js
+TCLXCookie = type=http-request,pattern=https://openapi.17usoft.net/maskantactivityapi/memberCenterSign\?.+,script-path=https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/tclx.js
 *************************
 【小火箭】 :
 *************************
 [Script]
-TCLX = type=cron,script-path=https://ocd0522.tk/ddgksf2013/Cuttlefish/raw/branch/master/Script/tclx.js, cronexpr="15 7,15 * * *", timeout=500, enable=true
-TCLXCookie = type=http-request,pattern=https://openapi.17usoft.net/maskantactivityapi/memberCenterSign\?.+,script-path=https://ocd0522.tk/ddgksf2013/Cuttlefish/raw/branch/master/Script/tclx.js
+TCLX = type=cron,script-path=https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/tclx.js, cronexpr="15 7,15 * * *", timeout=500, enable=true
+TCLXCookie = type=http-request,pattern=https://openapi.17usoft.net/maskantactivityapi/memberCenterSign\?.+,script-path=https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/tclx.js
 *************************
 [mitm]
 hostname = openapi.17usoft.net

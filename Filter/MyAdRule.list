@@ -7,7 +7,7 @@
 // @UpdateTime        2022-08-12
 // @Function          分流配置（自用，混合policy、proxy、reject、direct，不建议使用）
 // @Suitable          自行观看 “# ~ ”
-// @ScriptURL         https://ocd0522.tk/ddgksf2013/Cuttlefish/raw/branch/master/Filter/MyAdRule.list
+// @ScriptURL         https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Filter/MyAdRule.list
 // ==/UserScript==
 
 # ~ POLICY✅
