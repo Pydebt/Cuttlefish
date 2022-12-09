@@ -12,9 +12,9 @@ Author:Neurogram,ddgksf2013
 收藏功能，需自行修改代码，点击 想看 / 看过 触发收藏
 [rewrite_local]
 // 茶杯狐、流媒体
-^https://m.douban.com/movie/subject/.+ url script-response-body https://github.com/ddgksf2013/Scripts/raw/master/douban.js
+^https://m.douban.com/movie/subject/.+ url script-response-body https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/douban.js
 // Airtable 收藏
-^https://m.douban.com/movie/subject/.+\?seen=\d url script-request-header https://github.com/ddgksf2013/Scripts/raw/master/douban.js
+^https://m.douban.com/movie/subject/.+\?seen=\d url script-request-header https://raw.githubusercontent.com/Pydebt/Cuttlefish/master/Script/douban.js
 [mitm]
 hostname = m.douban.com
 */
